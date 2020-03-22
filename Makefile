@@ -1,4 +1,4 @@
-KMODULE := hello_world.ko
+KMODULE := get_uid.ko
 KDIR ?= /lib/modules/`uname -r`/build
 
 .PHONY: all clean install uninstall test vim-setup
