@@ -1,1 +1,1 @@
-obj-m := hello_world.o get_uid.o 
+obj-m := sys_call_hijack.o

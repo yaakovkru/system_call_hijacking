@@ -1,4 +1,4 @@
-KMODULE := get_uid.ko
+KMODULE := sys_call_hijack.ko
 KDIR ?= /lib/modules/`uname -r`/build
 
 .PHONY: all clean install uninstall test vim-setup
