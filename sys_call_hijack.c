@@ -4,30 +4,20 @@
 
 #include <asm/cacheflush.h>
 #include <linux/module.h>
+#include <linux/kallsyms.h>
 #include <linux/kernel.h>
-#include <linux/types.h>
 #include <asm/unistd.h>
 
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Kooker");
-MODULE_DESCRIPTION("Places Kernel hooks");
+MODULE_AUTHOR("Yaakov Kr");
+MODULE_DESCRIPTION("Places hooks on the syscalls in the kernel");
 MODULE_VERSION("0.0.4");
 
 
 typedef long (*sys_call_func_ptr_t)(void);
 
-/* 
- To get this address I've executed:
-  	"sudo cat /proc/kallsyms | grep sys_call_table"
- Or
-	"sudo cat /boot/System.map-`uname -r`  | grep sys_call_table"
- The information about these files can be found in the tutorial.
- Note: 
-	   * The "/proc/kallsyms" is the new kernel version of "/proc/ksyms".
-	   * System.map is the same as kallysms only when KASLR (Kernel ASLR) is disabled.
-*/
-static void ** sc_table_address = (void **)0xffffffff820002a0;
+static void ** g_sys_call_table = 0;
 static sys_call_func_ptr_t g_original_func_ptr = 0;
 static unsigned long g_original_cr0;
 
@@ -62,7 +52,14 @@ asmlinkage long sc_getuid_hook(void)
 
 static void insert_hook(void)
 {
-	g_original_func_ptr = sc_table_address[__NR_getuid];
+	/* 
+		Finding the sys_call_table
+		Note: this overcomes the KASLR protection
+	*/
+	g_sys_call_table = (void **) kallsyms_lookup_name("sys_call_table");
+	g_original_func_ptr = (sys_call_func_ptr_t) sc_table_address[__NR_getuid];
+
+	/* Writing the hook */
 	turn_off_write_protect();
 	sc_table_address[__NR_getuid] = (void *)sc_getuid_hook;
 	turn_on_write_protect();
@@ -70,9 +67,8 @@ static void insert_hook(void)
 
 static void remove_hook(void)
 {
-
 	turn_off_write_protect();
-	sc_table_address[__NR_getuid] = (void *)g_original_func_ptr;
+	g_sys_call_table[__NR_getuid] = (void *)g_original_func_ptr;
 	turn_on_write_protect();
 }
 
