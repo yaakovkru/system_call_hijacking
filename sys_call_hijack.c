@@ -12,7 +12,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kooker");
 MODULE_DESCRIPTION("Places Kernel hooks");
-MODULE_VERSION("1.0.0");
+MODULE_VERSION("0.0.4");
 
 
 typedef long (*sys_call_func_ptr_t)(void);
@@ -31,16 +31,20 @@ static void ** sc_table_address = (void **)0xffffffff820002a0;
 static sys_call_func_ptr_t g_original_func_ptr = 0;
 
 
+static inline void fast_write_cr0(unsigned long cr0)
+{
+	asm volatile("mov %0,%%cr0" : "+r"(cr0), "+m"(__force_order));
+}
 static void turn_off_write_protect(void)
 {
 	/* Write protect flag is the 16th bit in CR0 register */
-	write_cr0(read_cr0() & (~0x10000));
+	fast_write_cr0(read_cr0() & (~0x10000));
 }
 
 static void turn_on_write_protect(void)
 {
 	/* Write protect flag is the 16th bit in CR0 register */
-	write_cr0(read_cr0() | (~0x10000));
+	fast_write_cr0(read_cr0() | (~0x10000));
 }
 
 static long sc_getuid_hook(void)
