@@ -1,4 +1,4 @@
-KMODULE := get_uid.ko
+KMODULE := sys_call_hijack.ko
 KDIR ?= /lib/modules/`uname -r`/build
 
 .PHONY: all clean install uninstall test vim-setup
@@ -14,8 +14,8 @@ uninstall:
 vim-setup:
 	sudo $(MAKE) O=. ARCH=x86 -C ${KDIR} M=$(PWD) cscope tags
 
-test: install uninstall 
-	dmesg | tail -5
+test: all install uninstall 
+	dmesg | tail -10
 
 clean: 
 	$(MAKE) -C ${KDIR} M=$(PWD) clean
