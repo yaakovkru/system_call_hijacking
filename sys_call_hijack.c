@@ -29,25 +29,28 @@ typedef long (*sys_call_func_ptr_t)(void);
 */
 static void ** sc_table_address = (void **)0xffffffff820002a0;
 static sys_call_func_ptr_t g_original_func_ptr = 0;
+static unsigned long g_original_cr0;
 
 
 static inline void fast_write_cr0(unsigned long cr0)
 {
 	asm volatile("mov %0,%%cr0" : "+r"(cr0), "+m"(__force_order));
 }
+
 static void turn_off_write_protect(void)
 {
+	g_original_cr0 = read_cr0();
 	/* Write protect flag is the 16th bit in CR0 register */
-	fast_write_cr0(read_cr0() & (~0x10000));
+	fast_write_cr0(g_original_cr0 & (~0x10000));
 }
 
 static void turn_on_write_protect(void)
 {
 	/* Write protect flag is the 16th bit in CR0 register */
-	fast_write_cr0(read_cr0() | (~0x10000));
+	fast_write_cr0(g_original_cr0());
 }
 
-static long sc_getuid_hook(void)
+asmlinkage long sc_getuid_hook(void)
 {
 	long retval = g_original_func_ptr();
 	printk(KERN_INFO "getuid() -> %lu\n", retval);
